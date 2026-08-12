@@ -1,7 +1,156 @@
 
- * Upgrade dependencies for FFmpeg 4.0.2 and Tesseract 4.0.0-beta.4
+### August 10, 2026 version 1.5.14
+ * Upgrade dependencies for OpenBLAS 0.3.34, OpenCV 4.14.0, FFmpeg 8.1.2, Tesseract 5.5.3
+ * Compile classes with `parameters` bumping minimum requirements to Java SE 8 and Android 7.0 ([issue bytedeco/javacpp-presets#1739](https://github.com/bytedeco/javacpp-presets/issues/1739))
+
+### February 22, 2026 version 1.5.13
+ * Call `Pointer.trimMemory()` on `FFmpegFrameGrabber/Filter/Recorder` close to reclaim system memory on Linux ([issue #2334](https://github.com/bytedeco/javacv/issues/2334))
+ * Add `FrameRecorder.videoProfile` property ([pull #2361](https://github.com/bytedeco/javacv/pull/2361))
+ * Upgrade dependencies for OpenBLAS 0.3.31, OpenCV 4.13.0, FFmpeg 8.0.1, Leptonica 1.87.0, Tesseract 5.5.2
+
+### June 30, 2025 version 1.5.12
+ * Add `LibgdxFrameConverter` to convert `Frame` to Libgdx `Pixmap` ([pull #2315](https://github.com/bytedeco/javacv/pull/2315))
+ * Fix `FFmpegFrameRecorder` dropped frame issues with audio samples ([pull #2307](https://github.com/bytedeco/javacv/pull/2307))
+ * Add `FrameFilter.videoFilterArgs/audioFilterArgs` properties to support multiple different inputs ([pull #2304](https://github.com/bytedeco/javacv/pull/2304))
+ * Ensure `FFmpegFrameGrabber.start()` skips over streams with no codecs ([issue #2299](https://github.com/bytedeco/javacv/issues/2299))
+ * Add `FFmpegLogCallback.logRejectedOptions()` for debugging purposes ([pull #2301](https://github.com/bytedeco/javacv/pull/2301))
+ * Upgrade dependencies for OpenBLAS 0.3.30, OpenCV 4.11.0, FFmpeg 7.1.1, Tesseract 5.5.1
+
+### November 16, 2024 version 1.5.11
+ * Fix memory leak in `FFmpegFrameGrabber` when decoding from `InputStream` ([pull #2214](https://github.com/bytedeco/javacv/pull/2214))
+ * Upgrade dependencies for OpenBLAS 0.3.28, OpenCV 4.10.0, FFmpeg 7.1, Leptonica 1.85.0, Tesseract 5.5.0
+
+### January 29, 2024 version 1.5.10
+ * Work around `swscale` bug in `FFmpegFrameGrabber` for images with unaligned width ([issue #1960](https://github.com/bytedeco/javacv/issues/1960))
+ * Improve `FFmpegFrameGrabber.setTimestamp()` further for MPEG-TS streams ([pull #2144](https://github.com/bytedeco/javacv/pull/2144))
+ * Fix `module-info.java` broken since last release ([issue bytedeco/javacpp-presets#1414](https://github.com/bytedeco/javacpp-presets/issues/1414))
+ * Add new `AudioSplitMergeHelper` sample for processing raw audio frames ([pull #2052](https://github.com/bytedeco/javacv/pull/2052))
+ * Upgrade dependencies for OpenBLAS 0.3.26, OpenCV 4.9.0, FFmpeg 6.1.1, Leptonica 1.84.1, Tesseract 5.3.4
+
+### June 6, 2023 version 1.5.9
+ * Add `FrameRecorder.videoSideData/audioSideData` properties and `FFmpegFrameRecorder.setDisplayRotation()` for convenience ([issue #1976](https://github.com/bytedeco/javacv/issues/1976))
+ * Fix `FFmpegFrameGrabber.grab()` not returning audio frames buffered by the codec ([issue #1971](https://github.com/bytedeco/javacv/issues/1971))
+ * Upgrade dependencies for OpenBLAS 0.3.23, OpenCV 4.7.0, FFmpeg 6.0 ([issue #1693](https://github.com/bytedeco/javacv/issues/1693)), librealsense2 2.53.1, Leptonica 1.83.0, Tesseract 5.3.1
+
+### November 2, 2022 version 1.5.8
+ * Override `FFmpegFrameGrabber.getVideoCodecName()/getAudioCodecName()` to return names of opened codecs ([pull #1901](https://github.com/bytedeco/javacv/pull/1901))
+ * Add `FrameGrabber.videoDisposition/audioDisposition` properties to select streams by disposition ([pull #1879](https://github.com/bytedeco/javacv/pull/1879))
+ * Work around `OpenKinect2FrameGrabber` failing when provided with a pipeline on some system ([pull #1886](https://github.com/bytedeco/javacv/pull/1886))
+ * Fix `FFmpegFrameRecorder.record()` incorrectly flushing the video codec on data frames ([issue #1858](https://github.com/bytedeco/javacv/issues/1858))
+ * Improve accuracy of `FFmpegFrameGrabber.setFrameNumber()` ([pull #1851](https://github.com/bytedeco/javacv/pull/1851))
+ * Add `FrameGrabber.resetStartTime()` to allow `grabAtFrameRate()` after operations such as seeking ([pull #1846](https://github.com/bytedeco/javacv/pull/1846))
+ * Add `FrameGrabber.videoSideData/audioSideData` properties and `FFmpegFrameGrabber.getDisplayRotation()` for convenience ([issue #1361](https://github.com/bytedeco/javacv/issues/1361))
+ * Add to `FFmpegFrameGrabber` and `FFmpegFrameRecorder` constructors taking a `URL` for convenience and clarity
+ * Fix incorrect call to `opencv_calib3d.stereoRectify()` in `ProjectiveDevice` ([issue #1802](https://github.com/bytedeco/javacv/issues/1802))
+ * Retry after 10 ms when `av_read_frame()` returns `EAGAIN` in `FFmpegFrameGrabber.grabFrame()` ([issue #1784](https://github.com/bytedeco/javacv/issues/1784))
+ * Append `frame_rate=%d/%d` input parameter in `FFmpegFrameFilter` as required by `xfade` ([issue #1776](https://github.com/bytedeco/javacv/issues/1776))
+ * Update `FFmpegStreamingTimeout` sample to use `timeout` instead of `stimeout` for RTSP ([pull #1758](https://github.com/bytedeco/javacv/pull/1758))
+ * Restore static calls to `FFmpegFrameGrabber.tryLoad()` and `FFmpegFrameRecorder.tryLoad()` ([issue #1756](https://github.com/bytedeco/javacv/issues/1756))
+ * Enable by default on `RealSense2FrameGrabber.start()` all color, depth, and IR streams as `videoStream` ([pull #1750](https://github.com/bytedeco/javacv/pull/1750))
+ * Upgrade dependencies for OpenBLAS 0.3.21, OpenCV 4.6.0, FFmpeg 5.1.2, Leptonica 1.82.0 ([pull #1791](https://github.com/bytedeco/javacv/pull/1791)), Tesseract 5.2.0
+
+### February 11, 2022 version 1.5.7
+ * Fix accuracy and latency issues with `FFmpegFrameGrabber.setVideoFrameNumber()` ([pull #1734](https://github.com/bytedeco/javacv/pull/1734))
+ * Add new `Frame.pictType` field set to `I`, `P`, `B`, etc by `FFmpegFrameGrabber` ([pull #1730](https://github.com/bytedeco/javacv/pull/1730))
+ * Set metadata for `AVFrame.opaque` in `FFmpegFrameGrabber` with call to `av_frame_copy_props()` ([issue #1729](https://github.com/bytedeco/javacv/issues/1729))
+ * Add `charset` property to `FrameGrabber` and `FrameRecorder` to use for metadata from FFmpeg ([pull #1720](https://github.com/bytedeco/javacv/pull/1720))
+ * Call `Frame.close()` on temporary clones in `Java2DFrameUtils` to prevent premature deallocations ([issue #1716](https://github.com/bytedeco/javacv/issues/1716))
+ * Ignore errors from `avcodec_send_packet()` and `avcodec_receive_frame()` to emulate old API in `FFmpegFrameGrabber` ([issue #1679](https://github.com/bytedeco/javacv/issues/1679))
+ * Upgrade dependencies for OpenBLAS 0.3.19, OpenCV 4.5.5, FFmpeg 5.0, librealsense2 2.50.0, Leptonica 1.82.0, Tesseract 5.0.1
+
+### August 2, 2021 version 1.5.6
+ * Enhance audio and video synchronization of `JavaFxPlayVideoAndAudio` sample ([pull #1662](https://github.com/bytedeco/javacv/pull/1662))
+ * Add `FrameGrabber.grabAtFrameRate()` to simulate a device or stream when reading from files ([pull #1659](https://github.com/bytedeco/javacv/pull/1659))
+ * Update `FFmpegFrameGrabber` and `FFmpegFrameRecorder` with new `avcodec` API ([issue #1498](https://github.com/bytedeco/javacv/issues/1498))
+ * Add new `Similarity` sample with PSNR and MSSIM ([pull #1622](https://github.com/bytedeco/javacv/pull/1622))
+ * Avoid crash in `FFmpegFrameRecorder.stop()` by moving `av_write_trailer()` out of `flush()` ([issue #1616](https://github.com/bytedeco/javacv/issues/1616))
+ * Upgrade dependencies for OpenBLAS 0.3.17, OpenCV 4.5.3, FFmpeg 4.4, librealsense2 2.44.0, Leptonica 1.81.1
+
+### March 8, 2021 version 1.5.5
+ * Have `Frame` and `FrameConverter` implement `AutoCloseable` to release memory explicitly ([issue #1574](https://github.com/bytedeco/javacv/issues/1574))
+ * Add new `YOLONet` sample for object detection ([pull #1595](https://github.com/bytedeco/javacv/pull/1595))
+ * Fix crash on `FFmpegFrameGrabber.stop()` when in `ImageMode.RAW` ([issue #1568](https://github.com/bytedeco/javacv/issues/1568))
+ * Let `FFmpegFrameRecorder.flush()` ignore errors from the encoder ([issue #1563](https://github.com/bytedeco/javacv/issues/1563))
+ * Improve `FFmpegFrameGrabber.setTimestamp()` and fix `getAudioFrameRate()` ([pull #1559](https://github.com/bytedeco/javacv/pull/1559))
+ * Fix frame rate and aspect ratio on `FFmpegFrameRecorder.start(AVFormatContext)` ([pull #1535](https://github.com/bytedeco/javacv/pull/1535))
+ * Upgrade dependencies for OpenBLAS 0.3.13, OpenCV 4.5.1, FFmpeg 4.3.2, librealsense2 2.40.0
+ * Update unit tests to use codecs available in FFmpeg under LGPL v3 ([pull bytedeco/javacpp-presets#950](https://github.com/bytedeco/javacpp-presets/pull/950))
+ * Add `RealSense2FrameGrabber.tryLoad()` method and missing entries for librealsense2 ([issue bytedeco/procamcalib#25](https://github.com/bytedeco/procamcalib/issues/25))
+
+### September 9, 2020 version 1.5.4
+ * Fix error message thrown from `FFmpegFrameRecorder.start()` not containing filename ([pull #1492](https://github.com/bytedeco/javacv/pull/1492))
+ * Fix `FFmpegFrameFilter.pull()` not returning audio/video frames without audio/video filtergraph ([issue #1466](https://github.com/bytedeco/javacv/issues/1466))
+ * Update `OpenCVFrameConverter.convertToOrgOpenCvCoreMat()` with new API to set the stride ([issue #1460](https://github.com/bytedeco/javacv/issues/1460))
+ * Fix memory leaks and reduce memory fragmentation in `FFmpegFrameGrabber` and `FFmpegFrameRecorder` ([issue #1366](https://github.com/bytedeco/javacv/issues/1366))
+ * Use `PointerScope` in `FFmpegFrameFilter`, `FFmpegFrameGrabber`, and `FFmpegFrameRecorder` to deallocate quickly temporary buffers ([issue #1383](https://github.com/bytedeco/javacv/issues/1383))
+ * Fix `FFmpegFrameFilter` by calling `String.format()` with `Locale.ROOT` ([pull #1441](https://github.com/bytedeco/javacv/pull/1441))
+ * Increase thread safety of `FFmpegFrameFilter`, `FFmpegFrameGrabber`, and `FFmpegFrameRecorder` with `synchronized` methods ([issue #1434](https://github.com/bytedeco/javacv/issues/1434))
+ * Upgrade dependencies for OpenBLAS 0.3.10, OpenCV 4.4.0, FFmpeg 4.3.1, and Leptonica 1.80.0
+
+### April 14, 2020 version 1.5.3
+ * Add `FFmpegFrameGrabber.start(boolean findStreamInfo)` parameter to minimize startup time ([issue #1376](https://github.com/bytedeco/javacv/issues/1376))
+ * Let `FFmpegFrameGrabber.grab()` return non-audio/video streams as new `Frame.DATA` type ([pull #1378](https://github.com/bytedeco/javacv/pull/1378))
+ * Fix crash in `FFmpegFrameRecorder.flush()` for HLS format and possibly others ([pull #1374](https://github.com/bytedeco/javacv/pull/1374))
+ * Fix "Resetting to invalid mark" `IOException` thrown on `FFmpegFrameGrabber.release()` ([issue #911](https://github.com/bytedeco/javacv/issues/911))
+ * Upgrade dependencies for OpenBLAS 0.3.9, OpenCV 4.3.0, FFmpeg 4.2.2, Leptonica 1.79.0, and Tesseract 4.1.1
+ * Add `Seekable` and `SeekableByteArrayOutputStream` to be used with `FFmpegFrameRecorder` ([pull #1350](https://github.com/bytedeco/javacv/pull/1350))
+ * Update `RealSense2FrameGrabber` with support for sensor options and fix for multiple devices ([pull #1348](https://github.com/bytedeco/javacv/pull/1348))
+
+### November 5, 2019 version 1.5.2
+ * Increase thread safety of `FFmpegFrameFilter`, `FFmpegFrameGrabber`, and `FFmpegFrameRecorder` with `volatile boolean started` flag ([pull #1325](https://github.com/bytedeco/javacv/pull/1325))
+ * Let `FFmpegFrameFilter.push(null)` indicate EOF to audio filters as well ([issue #1315](https://github.com/bytedeco/javacv/issues/1315))
+ * Add `RealSense2FrameGrabber` to capture images with librealsense2 ([pull #1316](https://github.com/bytedeco/javacv/pull/1316))
+ * Disable seek function in `FFmpegFrameGrabber` when `maximumSize <= 0` ([issue #1304](https://github.com/bytedeco/javacv/issues/1304))
+ * Use `Pointer.retainReference()` to prevent `PointerScope` from deallocating globally shared callback objects for FFmpeg
+ * Fix `FFmpegFrameRecorder` failing to encode `float` samples in MP3 ([issue #1294](https://github.com/bytedeco/javacv/issues/1294))
+ * Fix `OpenCVFrameConverter` error in `IPCameraFrameGrabber` ([pull #1278](https://github.com/bytedeco/javacv/pull/1278))
+ * Allow setting properties for `OpenCVFrameGrabber` and `OpenCVFrameRecorder` with `setOption()` ([issue #1269](https://github.com/bytedeco/javacv/issues/1269))
+ * Add missing `requires java.desktop` to `module-info.java` ([issue #1265](https://github.com/bytedeco/javacv/issues/1265))
+ * Upgrade dependencies for OpenBLAS 0.3.7, OpenCV 4.1.2, FFmpeg 4.2.1, librealsense 1.12.4, and librealsense2 2.29.0
+
+### July 9, 2019 version 1.5.1
+ * Work around `swscale` bug in `FFmpegFrameGrabber` for images with unaligned width ([issue #845](https://github.com/bytedeco/javacv/issues/845))
+ * Add support for `AVSEEK_SIZE` to `FFmpegFrameGrabber` as required by MPEG-TS ([issue #1234](https://github.com/bytedeco/javacv/issues/1234))
+ * Throw exception on `start()` for already started `FFmpegFrameFilter`, `FFmpegFrameGrabber`, or `FFmpegFrameRecorder` ([issue #1233](https://github.com/bytedeco/javacv/issues/1233))
+ * Add dependency on OpenBLAS/MKL, now used by OpenCV to accelerate some matrix operations
+ * Upgrade dependencies for OpenCV 4.1.0, libdc1394 2.2.6, and Tesseract 4.1.0
+ * Add support for `Frame.timestamp` to `FFmpegFrameFilter` ([issue #1177](https://github.com/bytedeco/javacv/issues/1177))
+
+### April 11, 2019 version 1.5
+ * Override methods in `FFmpegFrameGrabber` to get all metadata from streams ([issue #1180](https://github.com/bytedeco/javacv/issues/1180))
+ * Fix sample rate in output of `FFmpegFrameRecorder` by setting deprecated `AVStream.codec.time_base` ([issue #1179](https://github.com/bytedeco/javacv/issues/1179))
+ * Add `asetpts=N` to input of `FFmpegFrameFilter` to make filters like `afade` behave as expected ([issue #1171](https://github.com/bytedeco/javacv/issues/1171))
+ * Use `AVFormat.format()` from `Frame.opaque` when available in `FFmpegFrameFilter` and `FFmpegFrameRecorder` ([issue #1173](https://github.com/bytedeco/javacv/issues/1173))
+ * Enable multithreading for all codecs by default in `FFmpegFrameGrabber` and `FFmpegFrameRecorder` ([issue #1163](https://github.com/bytedeco/javacv/issues/1163))
+ * Improve thread safety of `FFmpegFrameRecorder` and `Java2DFrameConverter` by relying less on `Buffer.position` ([pull #1166](https://github.com/bytedeco/javacv/pull/1166))
+ * Use ModiTect to compile `module-info.java` with JDK 8 and preserve backward compatibility
+ * Add `FFmpegFrameRecorder.closeOutputStream` and `FFmpegFrameGrabber.closeInputStream` properties to leave streams opened ([issue #1149](https://github.com/bytedeco/javacv/issues/1149))
+ * Add `FFmpegFrameRecorder.flush()` method that does not release the stream ([issue #1149](https://github.com/bytedeco/javacv/issues/1149))
+ * Readd `synchronized` blocks for `FFmpegFrameGrabber` and `FFmpegFrameRecorder`, but make unsafe methods public ([issue #1139](https://github.com/bytedeco/javacv/issues/1139))
+ * Allocate native memory for `Frame` using `Pointer` to allow deallocation with `PointerScope` ([issue #1152](https://github.com/bytedeco/javacv/issues/1152))
+ * Add `module-info.java` and depend on modularized JavaCPP Presets to comply with JPMS
+ * Upgrade dependencies for FFmpeg 4.1.3, libfreenect 0.5.7, and Leptonica 1.78.0
+ * Allow allocation of `Frame` images with custom strides
+ * Take into account `Bitmap.getRowBytes()` in `AndroidFrameConverter.convert(Bitmap)` ([issue #1143](https://github.com/bytedeco/javacv/issues/1143))
+ * Add `static { Loader.load(); }` in `LeptonicaFrameConverter` and `OpenCVFrameConverter` to prevent link errors ([issue #1128](https://github.com/bytedeco/javacv/issues/1128))
+
+### January 11, 2019 version 1.4.4
+ * Add `FFmpegFrameGrabber(InputStream, int)` constructor to set the maximum cache size used for seeking
+ * Set `pts` and `dts` for `AVPacket` in `FFmpegFrameRecorder.recordPacket()` ([pull #1097](https://github.com/bytedeco/javacv/pull/1097))
+ * Prevent premature deallocations with `LeptonicaFrameConverter` ([issue bytedeco/javacpp#272](https://github.com/bytedeco/javacpp/issues/272)) and `OpenCVFrameConverter.IplImage` ([issue #1101](https://github.com/bytedeco/javacv/issues/1101))
+ * Fix `OpenCVFrameGrabber` from crashing when in `ImageMode.GRAY`
+ * Add support for multiple inputs to `FFmpegFrameFilter` ([issue #955](https://github.com/bytedeco/javacv/issues/955))
+ * Fix fps in output of `FFmpegFrameRecorder` by setting deprecated `AVStream.codec.time_base` ([issue #1069](https://github.com/bytedeco/javacv/issues/1069))
+ * Fix memory leak in `FFmpegFrameRecorder` on `writePacket()` ([issue #1068](https://github.com/bytedeco/javacv/issues/1068))
+ * Upgrade dependencies for OpenCV 4.0.1, FFmpeg 4.1, FlyCapture 2.13.3.31, Leptonica 1.77.0, and Tesseract 4.0.0
+
+### October 15, 2018 version 1.4.3
+ * Add `imageScalingFlags` property to `FrameGrabber` and `FrameRecorder`, with `SWS_BILINEAR` as default for FFmpeg ([issue #845](https://github.com/bytedeco/javacv/issues/845))
+ * Add `OpenCVFrameConverter.ToOrgOpenCvCoreMat` to easily but efficiently get image data from official Java API of OpenCV ([issue bytedeco/javacpp#38](https://github.com/bytedeco/javacpp/issues/38))
+ * Keep globally shared callback objects for FFmpeg out of `PointerScope` ([issue #911](https://github.com/bytedeco/javacv/issues/911))
+ * Upgrade dependencies for OpenCV 3.4.3, FFmpeg 4.0.2, and Tesseract 4.0.0-rc2
  * Update the `Demo` class to use the C++ API of OpenCV ([issue #1042](https://github.com/bytedeco/javacv/issues/1042))
- * Add new `DeepLearningFaceDetection` sample ([pull #1041](https://github.com/bytedeco/javacv/pull/1041))
+ * Add new `DeepLearningFaceDetection` ([pull #1041](https://github.com/bytedeco/javacv/pull/1041)) and `PerspectiveWarpDemo` ([pull #1066](https://github.com/bytedeco/javacv/pull/1066)) samples
 
 ### July 17, 2018 version 1.4.2
  * Allow `FFmpegFrameGrabber` to use accelerated decoders with `videoCodecName` and `audioCodecName` properties ([pull #948](https://github.com/bytedeco/javacv/pull/948))

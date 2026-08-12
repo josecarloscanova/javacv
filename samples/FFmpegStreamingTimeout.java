@@ -1,11 +1,12 @@
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.bytedeco.javacpp.Pointer;
-import org.bytedeco.javacpp.avformat;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Frame;
 import org.bytedeco.javacv.FrameGrabber;
+
+import org.bytedeco.ffmpeg.avformat.*;
+import static org.bytedeco.ffmpeg.global.avformat.*;
 
 /**
  *
@@ -19,9 +20,12 @@ public class FFmpegStreamingTimeout {
      */
     private static enum TimeoutOption {
         /**
-         * Depends on protocol (FTP, HTTP, RTMP, SMB, SSH, TCP, UDP, or UNIX).
-         *
+         * Depends on protocol (FTP, HTTP, RTMP, RTSP, SMB, SSH, TCP, UDP, or UNIX).
          * http://ffmpeg.org/ffmpeg-all.html
+         *
+         * Specific for RTSP:
+         * Set socket TCP I/O timeout in microseconds.
+         * http://ffmpeg.org/ffmpeg-all.html#rtsp
          */
         TIMEOUT,
         /**
@@ -32,15 +36,7 @@ public class FFmpegStreamingTimeout {
          *
          * http://ffmpeg.org/ffmpeg-all.html#Protocols
          */
-        RW_TIMEOUT,
-        /**
-         * Protocols -> RTSP
-         *
-         * Set socket TCP I/O timeout in microseconds.
-         *
-         * http://ffmpeg.org/ffmpeg-all.html#rtsp
-         */
-        STIMEOUT;
+        RW_TIMEOUT;
 
         public String getKey() {
             return toString().toLowerCase();
@@ -60,24 +56,21 @@ public class FFmpegStreamingTimeout {
         try {
             FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(SOURCE_RTSP);
             /**
-             * "timeout" - IS IGNORED when a network cable have been unplugged
-             * before a connection and sometimes when connection is lost.
-             *
              * "rw_timeout" - IS IGNORED when a network cable have been
              * unplugged before a connection but the option takes effect after a
              * connection was established.
              *
-             * "stimeout" - works fine.
+             * "timeout" - works fine.
              */
             grabber.setOption(
-                    TimeoutOption.STIMEOUT.getKey(),
+                    TimeoutOption.TIMEOUT.getKey(),
                     String.valueOf(TIMEOUT * 1000000)
             ); // In microseconds.
             grabber.start();
 
             Frame frame = null;
             /**
-             * When network is disabled (before brabber was started) grabber
+             * When network is disabled (before grabber was started) grabber
              * throws exception: "org.bytedeco.javacv.FrameGrabber$Exception:
              * avformat_open_input() error -138: Could not open input...".
              *
@@ -108,7 +101,7 @@ public class FFmpegStreamingTimeout {
             grabber.start();
 
             final AtomicBoolean interruptFlag = new AtomicBoolean(false);
-            avformat.AVIOInterruptCB.Callback_Pointer cp = new avformat.AVIOInterruptCB.Callback_Pointer() {
+            AVIOInterruptCB.Callback_Pointer cp = new AVIOInterruptCB.Callback_Pointer() {
                 @Override
                 public int call(Pointer pointer) {
                     // 0 - continue, 1 - exit
@@ -118,12 +111,12 @@ public class FFmpegStreamingTimeout {
                 }
 
             };
-            avformat.AVFormatContext oc = grabber.getFormatContext();
-            avformat.avformat_alloc_context();
-            avformat.AVIOInterruptCB cb = new avformat.AVIOInterruptCB();
+            AVFormatContext oc = grabber.getFormatContext();
+            avformat_alloc_context();
+            AVIOInterruptCB cb = new AVIOInterruptCB();
             cb.callback(cp);
             oc.interrupt_callback(cb);
-            new Thread(() -> {
+            new Thread(new Runnable() { public void run() {
                 try {
                     TimeUnit.SECONDS.sleep(TIMEOUT);
                     interruptFlag.set(true);
@@ -131,7 +124,7 @@ public class FFmpegStreamingTimeout {
                 } catch (InterruptedException ex) {
                     System.out.println("exception in interruption thread: " + ex);
                 }
-            }).start();
+            }}).start();
 
             Frame frame = null;
             /**

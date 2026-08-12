@@ -26,16 +26,13 @@ import java.nio.ByteOrder;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Loader;
 import org.bytedeco.javacpp.Pointer;
-import org.bytedeco.javacpp.freenect2;
-import org.bytedeco.javacpp.freenect2.CpuPacketPipeline;
-import org.bytedeco.javacpp.freenect2.FrameMap;
-import org.bytedeco.javacpp.freenect2.Freenect2;
-import org.bytedeco.javacpp.freenect2.Freenect2Device;
-import org.bytedeco.javacpp.freenect2.PacketPipeline;
-import org.bytedeco.javacpp.freenect2.SyncMultiFrameListener;
 
-import static org.bytedeco.javacpp.opencv_core.*;
-import static org.bytedeco.javacpp.opencv_imgproc.*;
+import org.bytedeco.libfreenect2.*;
+import org.bytedeco.opencv.opencv_core.*;
+import org.bytedeco.opencv.opencv_imgproc.*;
+import static org.bytedeco.libfreenect2.global.freenect2.*;
+import static org.bytedeco.opencv.global.opencv_core.*;
+import static org.bytedeco.opencv.global.opencv_imgproc.*;
 
 /**
  *
@@ -100,9 +97,9 @@ public class OpenKinect2FrameGrabber extends FrameGrabber {
                 if (freenect2Context != null) {
                     return;
                 }
-                Loader.load(org.bytedeco.javacpp.freenect2.class);
+                Loader.load(org.bytedeco.libfreenect2.global.freenect2.class);
 
-                // Context is shared accross cameras. 
+                // Context is shared accross cameras.
                 freenect2Context = new Freenect2();
             } catch (Throwable t) {
                 throw loadingException = new FrameGrabber.Exception("Failed to load " + OpenKinect2FrameGrabber.class, t);
@@ -126,21 +123,21 @@ public class OpenKinect2FrameGrabber extends FrameGrabber {
 
     public void enableColorStream() {
         if (!colorEnabled) {
-            frameTypes |= freenect2.Frame.Color;
+            frameTypes |= org.bytedeco.libfreenect2.Frame.Color;
             colorEnabled = true;
         }
     }
 
     public void enableDepthStream() {
         if (!depthEnabled) {
-            frameTypes |= freenect2.Frame.Depth;
+            frameTypes |= org.bytedeco.libfreenect2.Frame.Depth;
             depthEnabled = true;
         }
     }
 
     public void enableIRStream() {
         if (!IREnabled) {
-            frameTypes |= freenect2.Frame.Ir;
+            frameTypes |= org.bytedeco.libfreenect2.Frame.Ir;
             IREnabled = true;
         }
     }
@@ -156,6 +153,10 @@ public class OpenKinect2FrameGrabber extends FrameGrabber {
 
     @Override
     public void start() throws FrameGrabber.Exception {
+        startDevice(null);
+    }
+
+    public void startDevice(PacketPipeline pipeline) throws FrameGrabber.Exception {
         if (freenect2Context == null) {
             try {
                 OpenKinect2FrameGrabber.tryLoad();
@@ -171,16 +172,15 @@ public class OpenKinect2FrameGrabber extends FrameGrabber {
             throw new Exception("FATAL error: OpenKinect2: no device connected!");
         }
         device = null;
-        PacketPipeline pipeline = null;
 
-        pipeline = new CpuPacketPipeline();
+//        pipeline = new CpuPacketPipeline();
 //        pipeline = new libfreenect2::OpenGLPacketPipeline();
 //        pipeline = new libfreenect2::OpenCLPacketPipeline(deviceId);
 //        pipeline = new libfreenect2::CudaPacketPipeline(deviceId);
         serial = freenect2Context.getDeviceSerialNumber(deviceNumber).getString();
-        device = freenect2Context.openDevice(serial, pipeline);
+        device = (pipeline != null) ? freenect2Context.openDevice(serial, pipeline) : freenect2Context.openDevice(serial);
 
-        frameListener = new freenect2.SyncMultiFrameListener(frameTypes);
+        frameListener = new SyncMultiFrameListener(frameTypes);
 
         if (colorEnabled) {
             device.setColorFrameListener(frameListener);
@@ -215,7 +215,7 @@ public class OpenKinect2FrameGrabber extends FrameGrabber {
 
     protected void grabVideo() {
         int iplDepth = IPL_DEPTH_8U;
-        freenect2.Frame rgb = frames.get(freenect2.Frame.Color);
+        org.bytedeco.libfreenect2.Frame rgb = frames.get(org.bytedeco.libfreenect2.Frame.Color);
         int channels = (int) rgb.bytes_per_pixel();
         int deviceWidth = (int) rgb.width();
         int deviceHeight = (int) rgb.height();
@@ -240,7 +240,7 @@ public class OpenKinect2FrameGrabber extends FrameGrabber {
          * 512x424 float. Range is [0.0, 65535.0].
          */
 
-        freenect2.Frame IRImage = frames.get(freenect2.Frame.Ir);
+        org.bytedeco.libfreenect2.Frame IRImage = frames.get(org.bytedeco.libfreenect2.Frame.Ir);
 
         int channels = 1;
         int iplDepth = IPL_DEPTH_32F;
@@ -264,7 +264,7 @@ public class OpenKinect2FrameGrabber extends FrameGrabber {
         /**
          * 512x424 float also ?.
          */
-        freenect2.Frame depthImage = frames.get(freenect2.Frame.Depth);
+        org.bytedeco.libfreenect2.Frame depthImage = frames.get(org.bytedeco.libfreenect2.Frame.Depth);
         int channels = 1;
         int iplDepth = IPL_DEPTH_32F;
         int bpp = (int) depthImage.bytes_per_pixel();

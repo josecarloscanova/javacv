@@ -5,12 +5,6 @@
  * Paolo Bolettieri <paolo.bolettieri@gmail.com>
  */
 
-import static org.bytedeco.javacpp.opencv_core.minMaxLoc;
-import static org.bytedeco.javacpp.opencv_dnn.blobFromImage;
-import static org.bytedeco.javacpp.opencv_dnn.readNetFromCaffe;
-import static org.bytedeco.javacpp.opencv_imgcodecs.imread;
-import static org.bytedeco.javacpp.opencv_imgproc.resize;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -18,10 +12,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.bytedeco.javacpp.opencv_core.Mat;
-import org.bytedeco.javacpp.opencv_core.Point;
-import org.bytedeco.javacpp.opencv_core.Size;
-import org.bytedeco.javacpp.opencv_dnn.Net;
+import org.bytedeco.opencv.opencv_core.*;
+import org.bytedeco.opencv.opencv_dnn.*;
+import org.bytedeco.opencv.opencv_imgproc.*;
+import static org.bytedeco.opencv.global.opencv_core.*;
+import static org.bytedeco.opencv.global.opencv_dnn.*;
+import static org.bytedeco.opencv.global.opencv_imgcodecs.*;
+import static org.bytedeco.opencv.global.opencv_imgproc.*;
 
 public class CaffeGooglenet {
 
@@ -84,7 +81,7 @@ public class CaffeGooglenet {
         //! [Prepare blob]
 
         //! [Set input blob]
-        net.setInput(inputBlob, "data");      //set the network input
+        net.setInput(inputBlob, "data", 1.0, null);      //set the network input
         //! [Set input blob]
 
         //! [Make forward pass]

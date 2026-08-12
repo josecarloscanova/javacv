@@ -25,8 +25,10 @@ package org.bytedeco.javacv;
 import cl.eye.CLCamera;
 import java.io.File;
 
-import static org.bytedeco.javacpp.opencv_core.*;
-import static org.bytedeco.javacpp.opencv_imgproc.*;
+import org.bytedeco.opencv.opencv_core.*;
+import org.bytedeco.opencv.opencv_imgproc.*;
+import static org.bytedeco.opencv.global.opencv_core.*;
+import static org.bytedeco.opencv.global.opencv_imgproc.*;
 
 /** Minimal Sony PS3 Eye camera grabber implementation.
  * 
@@ -116,7 +118,7 @@ public class PS3EyeFrameGrabber extends FrameGrabber {
     }
 
     /** Color mode, VGA resolution, 60 FPS frame rate.
-     *   @param system wide camera index
+     *   @param cameraIndex system wide camera index
      */
     public PS3EyeFrameGrabber(int cameraIndex) throws Exception {
         this(cameraIndex, 640, 480, 60);
@@ -272,9 +274,8 @@ public class PS3EyeFrameGrabber extends FrameGrabber {
     }
 
 
-    /** Start camera first (before grabbing).
-     * 
-     * @return success/failure (true/false)
+    /**
+     * Start camera first (before grabbing).
      */
     public void start() throws Exception {
         boolean b;
@@ -299,9 +300,8 @@ public class PS3EyeFrameGrabber extends FrameGrabber {
     }
 
 
-    /** Stop camera. It can be re-started if needed.
-     * 
-     * @return success/failure (true/false)
+    /**
+     * Stop camera. It can be re-started if needed.
      */
     public void stop() throws Exception {
         boolean b = camera.stopCamera();

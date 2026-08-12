@@ -1,20 +1,15 @@
 import org.bytedeco.javacpp.indexer.FloatIndexer;
-import static org.bytedeco.javacpp.opencv_core.CV_32F;
-import org.bytedeco.javacpp.opencv_core.Mat;
-import org.bytedeco.javacpp.opencv_core.Point;
-import org.bytedeco.javacpp.opencv_core.Rect;
-import org.bytedeco.javacpp.opencv_core.Scalar;
-import org.bytedeco.javacpp.opencv_core.Size;
-import org.bytedeco.javacpp.opencv_dnn.Net;
-import static org.bytedeco.javacpp.opencv_dnn.blobFromImage;
-import static org.bytedeco.javacpp.opencv_dnn.readNetFromCaffe;
-import static org.bytedeco.javacpp.opencv_imgproc.rectangle;
-import static org.bytedeco.javacpp.opencv_imgproc.resize;
-import static org.bytedeco.javacpp.opencv_videoio.CV_CAP_PROP_FRAME_HEIGHT;
-import static org.bytedeco.javacpp.opencv_videoio.CV_CAP_PROP_FRAME_WIDTH;
-import org.bytedeco.javacpp.opencv_videoio.VideoCapture;
 import org.bytedeco.javacv.CanvasFrame;
 import org.bytedeco.javacv.OpenCVFrameConverter;
+
+import org.bytedeco.opencv.opencv_core.*;
+import org.bytedeco.opencv.opencv_dnn.*;
+import org.bytedeco.opencv.opencv_imgproc.*;
+import org.bytedeco.opencv.opencv_videoio.*;
+import static org.bytedeco.opencv.global.opencv_core.*;
+import static org.bytedeco.opencv.global.opencv_dnn.*;
+import static org.bytedeco.opencv.global.opencv_imgproc.*;
+import static org.bytedeco.opencv.global.opencv_videoio.*;
 
 /**
  * Created on Jul 28, 2018 
@@ -53,7 +48,7 @@ public class DeepLearningFaceDetection {
 
         //create a 4-dimensional blob from image with NCHW (Number of images in the batch -for training only-, Channel, Height, Width) dimensions order,
         //for more detailes read the official docs at https://docs.opencv.org/trunk/d6/d0f/group__dnn.html#gabd0e76da3c6ad15c08b01ef21ad55dd8
-        Mat blob = blobFromImage(image, 1.0, new Size(300, 300), new Scalar(104.0, 177.0, 123.0, 0), false, false);
+        Mat blob = blobFromImage(image, 1.0, new Size(300, 300), new Scalar(104.0, 177.0, 123.0, 0), false, false, CV_32F);
 
         net.setInput(blob);//set the input to network model
         Mat output = net.forward();//feed forward the input to the netwrok to get the output matrix
@@ -80,8 +75,8 @@ public class DeepLearningFaceDetection {
 
     public static void main(String[] args) {
         VideoCapture capture = new VideoCapture();
-        capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
-        capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
+        capture.set(CAP_PROP_FRAME_WIDTH, 1280);
+        capture.set(CAP_PROP_FRAME_HEIGHT, 720);
 
         if (!capture.open(0)) {
             System.out.println("Can not open the cam !!!");

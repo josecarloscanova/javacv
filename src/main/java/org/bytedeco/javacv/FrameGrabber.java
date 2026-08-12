@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2015 Samuel Audet
+ * Copyright (C) 2009-2022 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -27,6 +27,8 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.Buffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -45,7 +47,7 @@ import java.util.concurrent.Future;
 public abstract class FrameGrabber implements Closeable {
 
     public static final List<String> list = new LinkedList<String>(Arrays.asList(new String[] {
-		"DC1394", "FlyCapture", "FlyCapture2", "OpenKinect", "OpenKinect2", "RealSense", "PS3Eye", "VideoInput", "OpenCV", "FFmpeg", "IPCamera" }));
+        "DC1394", "FlyCapture", "FlyCapture2", "OpenKinect", "OpenKinect2", "RealSense", "RealSense2", "PS3Eye", "VideoInput", "OpenCV", "FFmpeg", "IPCamera" }));
     public static void init() {
         for (String name : list) {
             try {
@@ -178,11 +180,12 @@ public abstract class FrameGrabber implements Closeable {
             SENSOR_PATTERN_BGGR = (1L << 32) | 1;
 
     protected int videoStream = -1, audioStream = -1;
+    protected int videoDisposition = 0, audioDisposition = 0;
     protected String format = null, videoCodecName = null, audioCodecName = null;
     protected int imageWidth = 0, imageHeight = 0, audioChannels = 0;
     protected ImageMode imageMode = ImageMode.COLOR;
     protected long sensorPattern = -1L;
-    protected int pixelFormat = -1, videoCodec, videoBitrate = 0;
+    protected int pixelFormat = -1, videoCodec, videoBitrate = 0, imageScalingFlags = 0;
     protected double aspectRatio = 0, frameRate = 0;
     protected SampleMode sampleMode = SampleMode.SHORT;
     protected int sampleFormat = -1, audioCodec, audioBitrate = 0, sampleRate = 0;
@@ -192,15 +195,19 @@ public abstract class FrameGrabber implements Closeable {
     protected int numBuffers = 4;
     protected double gamma = 0.0;
     protected boolean deinterlace = false;
+    protected Charset charset = Charset.defaultCharset();
     protected Map<String, String> options = new HashMap<String, String>();
     protected Map<String, String> videoOptions = new HashMap<String, String>();
     protected Map<String, String> audioOptions = new HashMap<String, String>();
     protected Map<String, String> metadata = new HashMap<String, String>();
     protected Map<String, String> videoMetadata = new HashMap<String, String>();
     protected Map<String, String> audioMetadata = new HashMap<String, String>();
+    protected Map<String, Buffer> videoSideData = new HashMap<String, Buffer>();
+    protected Map<String, Buffer> audioSideData = new HashMap<String, Buffer>();
     protected int frameNumber = 0;
     protected long timestamp = 0;
     protected int maxDelay = -1;
+    protected long startTime = 0;
 
     public int getVideoStream() {
         return videoStream;
@@ -214,6 +221,20 @@ public abstract class FrameGrabber implements Closeable {
     }
     public void setAudioStream(int audioStream) {
         this.audioStream = audioStream;
+    }
+
+    public void setVideoDisposition(int videoDisposition) {
+        this.videoDisposition = videoDisposition;
+    }
+    public int getVideoDisposition() {
+        return videoDisposition;
+    }
+
+    public void setAudioDisposition(int audioDisposition) {
+        this.audioDisposition = audioDisposition;
+    }
+    public int getAudioDisposition() {
+        return audioDisposition;
     }
 
     public String getFormat() {
@@ -291,6 +312,13 @@ public abstract class FrameGrabber implements Closeable {
     }
     public void setVideoBitrate(int videoBitrate) {
         this.videoBitrate = videoBitrate;
+    }
+
+    public int getImageScalingFlags() {
+        return imageScalingFlags;
+    }
+    public void setImageScalingFlags(int imageScalingFlags) {
+        this.imageScalingFlags = imageScalingFlags;
     }
 
     public double getAspectRatio() {
@@ -384,6 +412,13 @@ public abstract class FrameGrabber implements Closeable {
         this.deinterlace = deinterlace;
     }
 
+    public Charset getCharset() {
+        return charset;
+    }
+    public void setCharset(Charset charset) {
+        this.charset = charset;
+    }
+
     public Map<String, String> getOptions() {
         return options;
     }
@@ -466,6 +501,34 @@ public abstract class FrameGrabber implements Closeable {
     }
     public void setAudioMetadata(String key, String value) {
         audioMetadata.put(key, value);
+    }
+
+    public Map<String, Buffer> getVideoSideData() {
+        return videoSideData;
+    }
+    public void setVideoSideData(Map<String, Buffer> videoSideData) {
+        this.videoSideData = videoSideData;
+    }
+
+    public Buffer getVideoSideData(String key) {
+        return videoSideData.get(key);
+    }
+    public void setVideoSideData(String key, Buffer value) {
+        videoSideData.put(key, value);
+    }
+
+    public Map<String, Buffer> getAudioSideData() {
+        return audioSideData;
+    }
+    public void setAudioSideData(Map<String, Buffer> audioSideData) {
+        this.audioSideData = audioSideData;
+    }
+
+    public Buffer getAudioSideData(String key) {
+        return audioSideData.get(key);
+    }
+    public void setAudioSideData(String key, Buffer value) {
+        audioSideData.put(key, value);
     }
 
     public int getFrameNumber() {
@@ -716,5 +779,32 @@ public abstract class FrameGrabber implements Closeable {
 
     public Array createArray(FrameGrabber[] frameGrabbers) {
         return new Array(frameGrabbers);
+    }
+
+    /** Returns {@code frame = grab()} after {@code waitForTimestamp(frame)}. */
+    public Frame grabAtFrameRate() throws Exception, InterruptedException {
+        Frame frame = grab();
+        if (frame != null) {
+            waitForTimestamp(frame);
+        }
+        return frame;
+    }
+
+    /** Returns true if {@code Thread.sleep()} had to be called. */
+    public boolean waitForTimestamp(Frame frame) throws InterruptedException {
+        if (startTime == 0) {
+            startTime = System.nanoTime() / 1000 - frame.timestamp;
+        } else {
+            long delay = frame.timestamp - (System.nanoTime() / 1000 - startTime);
+            if (delay > 0) {
+                Thread.sleep(delay / 1000, (int)(delay % 1000) * 1000);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void resetStartTime() {
+        startTime = 0;
     }
 }

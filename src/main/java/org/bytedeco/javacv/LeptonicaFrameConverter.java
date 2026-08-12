@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Samuel Audet
+ * Copyright (C) 2018-2021 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -25,10 +25,12 @@ package org.bytedeco.javacv;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import org.bytedeco.javacpp.IntPointer;
+import org.bytedeco.javacpp.BytePointer;
+import org.bytedeco.javacpp.Loader;
 import org.bytedeco.javacpp.Pointer;
 
-import static org.bytedeco.javacpp.lept.*;
+import org.bytedeco.leptonica.*;
+import static org.bytedeco.leptonica.global.leptonica.*;
 
 /**
  * A utility class to map data between {@link Frame} and {@link PIX},
@@ -38,7 +40,10 @@ import static org.bytedeco.javacpp.lept.*;
  * @author Samuel Audet
  */
 public class LeptonicaFrameConverter extends FrameConverter<PIX> {
+    static { Loader.load(org.bytedeco.leptonica.global.leptonica.class); }
+
     PIX pix;
+    BytePointer frameData, pixData;
     ByteBuffer frameBuffer, pixBuffer;
 
     static boolean isEqual(Frame frame, PIX pix) {
@@ -56,14 +61,24 @@ public class LeptonicaFrameConverter extends FrameConverter<PIX> {
         } else if (frame.opaque instanceof PIX) {
             return (PIX)frame.opaque;
         } else if (!isEqual(frame, pix)) {
-            pix = PIX.createHeader(frame.imageWidth, frame.imageHeight, frame.imageChannels * 8)
-                     .wpl(frame.imageStride / 4 * Math.abs(frame.imageDepth) / 8);
+            Pointer data;
             if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
-                pixBuffer = ByteBuffer.allocateDirect(frame.imageHeight * frame.imageStride).order(ByteOrder.BIG_ENDIAN);
-                pix.data(new IntPointer(new Pointer(pixBuffer)));
+                if (pixData == null || pixData.capacity() < frame.imageHeight * frame.imageStride) {
+                    if (pixData != null) {
+                        pixData.releaseReference();
+                    }
+                    pixData = new BytePointer(frame.imageHeight * frame.imageStride).retainReference();
+                }
+                data = pixData;
+                pixBuffer = data.asByteBuffer().order(ByteOrder.BIG_ENDIAN);
             } else {
-                pix.data(new IntPointer(new Pointer(frame.image[0].position(0))));
+                data = new Pointer(frame.image[0].position(0));
             }
+            if (pix != null) {
+                pix.releaseReference();
+            }
+            pix = PIX.create(frame.imageWidth, frame.imageHeight, frame.imageChannels * 8, data)
+                     .wpl(frame.imageStride / 4 * Math.abs(frame.imageDepth) / 8).retainReference();
         }
 
         if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
@@ -105,9 +120,23 @@ public class LeptonicaFrameConverter extends FrameConverter<PIX> {
             frame.imageChannels = pix.d() / 8;
             frame.imageStride = pix.wpl() * 4;
             if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
-                frameBuffer = ByteBuffer.allocateDirect(frame.imageHeight * frame.imageStride).order(ByteOrder.LITTLE_ENDIAN);
+                if (frameData == null || frameData.capacity() < frame.imageHeight * frame.imageStride) {
+                    if (frameData != null) {
+                        frameData.releaseReference();
+                    }
+                    frameData = new BytePointer(frame.imageHeight * frame.imageStride).retainReference();
+                }
+                frameBuffer = frameData.asByteBuffer().order(ByteOrder.LITTLE_ENDIAN);
+                frame.opaque = frameData;
                 frame.image = new Buffer[] { frameBuffer };
             } else {
+                if (tempPix != null) {
+                    if (this.pix != null) {
+                        this.pix.releaseReference();
+                    }
+                    this.pix = pix = pix.clone();
+                }
+                frame.opaque = pix;
                 frame.image = new Buffer[] { pix.createBuffer() };
             }
         }
@@ -118,11 +147,24 @@ public class LeptonicaFrameConverter extends FrameConverter<PIX> {
         }
 
         if (tempPix != null) {
-            frame.opaque = pix.clone();
             pixDestroy(tempPix);
-        } else {
-            frame.opaque = pix;
         }
         return frame;
+    }
+
+    @Override public void close() {
+        super.close();
+        if (pix != null) {
+            pix.releaseReference();
+            pix = null;
+        }
+        if (pixData != null) {
+            pixData.releaseReference();
+            pixData = null;
+        }
+        if (frameData != null) {
+            frameData.releaseReference();
+            frameData = null;
+        }
     }
 }

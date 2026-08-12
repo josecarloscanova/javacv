@@ -4,11 +4,11 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
 
-import org.bytedeco.javacpp.opencv_core.IplImage;
-import org.bytedeco.javacpp.opencv_core.Mat;
 import org.bytedeco.javacv.Frame;
 import org.bytedeco.javacv.Java2DFrameConverter;
 import org.bytedeco.javacv.OpenCVFrameConverter;
+import org.bytedeco.opencv.opencv_core.IplImage;
+import org.bytedeco.opencv.opencv_core.Mat;
 
 /**
  * Convenience class for performing various conversions between Mat, IplImage,
@@ -17,8 +17,8 @@ import org.bytedeco.javacv.OpenCVFrameConverter;
  *
  * All created Frame, Mat, IplImages and BufferedImages are cloned internally
  * after creation so that their memory locations remain valid after the
- * converters which created them are garbage collected. This is safer for the
- * called, but may be slower.
+ * converters which created them are closed or garbage collected. This is safer
+ * for the caller, but may be slower.
  *
  * If performance is critical, use the *FrameConverter classes directly, after
  * reading about the image validity constraints (eg, images data is only valid
@@ -49,15 +49,21 @@ public class Java2DFrameUtils {
     }
 
     public synchronized static BufferedImage toBufferedImage(IplImage src) {
-        return deepCopy(biConv.getBufferedImage(iplConv.convert(src).clone()));
+        try (Frame f = iplConv.convert(src).clone()) {
+            return deepCopy(biConv.getBufferedImage(f));
+        }
     }
 
     public synchronized static BufferedImage toBufferedImage(Mat src) {
-        return deepCopy(biConv.getBufferedImage(matConv.convert(src).clone()));
+        try (Frame f = matConv.convert(src).clone()) {
+            return deepCopy(biConv.getBufferedImage(f));
+        }
     }
 
     public synchronized static BufferedImage toBufferedImage(Frame src) {
-        return deepCopy(biConv.getBufferedImage(src.clone()));
+        try (Frame f = src.clone()) {
+            return deepCopy(biConv.getBufferedImage(f));
+        }
     }
 
     public synchronized static IplImage toIplImage(Mat src){

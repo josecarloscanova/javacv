@@ -36,8 +36,9 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.TimeUnit;
 
-import static org.bytedeco.javacpp.opencv_core.*;
-import static org.bytedeco.javacpp.opencv_imgcodecs.*;
+import org.bytedeco.opencv.opencv_core.*;
+import static org.bytedeco.opencv.global.opencv_core.*;
+import static org.bytedeco.opencv.global.opencv_imgcodecs.*;
 
 public class IPCameraFrameGrabber extends FrameGrabber {
 
@@ -55,20 +56,23 @@ public class IPCameraFrameGrabber extends FrameGrabber {
             throw loadingException;
         } else {
             try {
-                Loader.load(org.bytedeco.javacpp.opencv_highgui.class);
+                Loader.load(org.bytedeco.opencv.global.opencv_highgui.class);
             } catch (Throwable t) {
                 throw loadingException = new Exception("Failed to load " + IPCameraFrameGrabber.class, t);
             }
         }
     }
 
-    private final FrameConverter converter = new OpenCVFrameConverter.ToIplImage();
+    /** Upper bound on a single MJPEG frame's declared Content-Length, to reject bogus/hostile values. */
+    private static final int MAX_CONTENT_LENGTH = 64 * 1024 * 1024;
+
+    private final FrameConverter converter = new OpenCVFrameConverter.ToMat();
     private final URL url;
     private final int connectionTimeout;
     private final int readTimeout;
     private DataInputStream input;
     private byte[] pixelBuffer = new byte[1024];
-    private IplImage decoded = null;
+    private Mat decoded = null;
 
     /**
      * @param url          The URL to create the camera connection with.
@@ -160,9 +164,9 @@ public class IPCameraFrameGrabber extends FrameGrabber {
     public Frame grab() throws Exception {
         try {
             final byte[] b = readImage();
-            final CvMat mat = cvMat(1, b.length, CV_8UC1, new BytePointer(b));
+            final Mat mat = new Mat(1, b.length, CV_8UC1, new BytePointer(b));
             releaseDecoded();
-            return converter.convert(decoded = cvDecodeImage(mat));
+            return converter.convert(decoded = imdecode(mat, IMREAD_COLOR));
         } catch (IOException e) {
             throw new Exception(e.getMessage(), e);
         }
@@ -180,7 +184,7 @@ public class IPCameraFrameGrabber extends FrameGrabber {
      */
     private void releaseDecoded() {
         if (decoded != null) {
-            cvReleaseImage(decoded);
+            decoded.release();
             decoded = null;
         }
     }
@@ -225,6 +229,11 @@ public class IPCameraFrameGrabber extends FrameGrabber {
         final int contentLength = Integer.parseInt(subheader.substring(c0, c1).trim());
         //log.debug("Content-Length: " + contentLength);
 
+        // reject bogus or unreasonably large frames instead of trusting the remote camera blindly
+        if (contentLength <= 0 || contentLength > MAX_CONTENT_LENGTH) {
+            throw new IOException("Invalid or unreasonable Content-Length received from camera stream: " + contentLength);
+        }
+
         // adaptive size - careful - don't want a 2G jpeg
         ensureBufferCapacity(contentLength);
 
@@ -247,16 +256,20 @@ public class IPCameraFrameGrabber extends FrameGrabber {
      * original version of IPCameraFrameGrabber that allocated a 4096 element byte array for every read
      * caused about 200MB of allocations within 13 seconds.  In this version, almost no additional heap space
      * is typically allocated per frame.
+     *
+     * Uses {@code long} arithmetic while growing the target capacity so that a huge (but still <=
+     * {@link #MAX_CONTENT_LENGTH}) {@code desiredCapacity} can never overflow a 32-bit {@code int} and turn this
+     * into an infinite loop.
      */
     private void ensureBufferCapacity(int desiredCapacity) {
-        int capacity = pixelBuffer.length;
+        long capacity = pixelBuffer.length;
 
         while (capacity < desiredCapacity) {
             capacity *= 2;
         }
 
         if (capacity > pixelBuffer.length) {
-            pixelBuffer = new byte[capacity];
+            pixelBuffer = new byte[(int) capacity];
         }
     }
 

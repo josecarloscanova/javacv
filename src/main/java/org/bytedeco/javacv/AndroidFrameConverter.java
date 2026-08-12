@@ -51,6 +51,9 @@ public class AndroidFrameConverter extends FrameConverter<Bitmap> {
     public Frame convert(byte[] data, int width, int height) {
         if (frame == null || frame.imageWidth != width
                 || frame.imageHeight != height || frame.imageChannels != 3) {
+            if (frame != null) {
+                frame.close();
+            }
             frame = new Frame(width, height, Frame.DEPTH_UBYTE, 3);
         }
         ByteBuffer out = (ByteBuffer)frame.image[0];
@@ -110,12 +113,14 @@ public class AndroidFrameConverter extends FrameConverter<Bitmap> {
             default: assert false;
         }
 
-        if (frame == null || frame.imageWidth != bitmap.getWidth()
+        if (frame == null || frame.imageWidth != bitmap.getWidth() || frame.imageStride != bitmap.getRowBytes()
                 || frame.imageHeight != bitmap.getHeight() || frame.imageChannels != channels) {
-            frame = new Frame(bitmap.getWidth(), bitmap.getHeight(), Frame.DEPTH_UBYTE, channels);
+            if (frame != null) {
+                frame.close();
+            }
+            frame = new Frame(bitmap.getWidth(), bitmap.getHeight(), Frame.DEPTH_UBYTE, channels, bitmap.getRowBytes());
         }
 
-        // assume matching strides
         bitmap.copyPixelsToBuffer(frame.image[0].position(0));
 
         return frame;

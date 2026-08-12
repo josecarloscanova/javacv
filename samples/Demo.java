@@ -25,10 +25,14 @@ import java.net.URL;
 import org.bytedeco.javacv.*;
 import org.bytedeco.javacpp.*;
 import org.bytedeco.javacpp.indexer.*;
-import static org.bytedeco.javacpp.opencv_core.*;
-import static org.bytedeco.javacpp.opencv_imgproc.*;
-import static org.bytedeco.javacpp.opencv_calib3d.*;
-import static org.bytedeco.javacpp.opencv_objdetect.*;
+import org.bytedeco.opencv.opencv_core.*;
+import org.bytedeco.opencv.opencv_imgproc.*;
+import org.bytedeco.opencv.opencv_calib3d.*;
+import org.bytedeco.opencv.opencv_objdetect.*;
+import static org.bytedeco.opencv.global.opencv_core.*;
+import static org.bytedeco.opencv.global.opencv_imgproc.*;
+import static org.bytedeco.opencv.global.opencv_calib3d.*;
+import static org.bytedeco.opencv.global.opencv_objdetect.*;
 
 public class Demo {
     public static void main(String[] args) throws Exception {
@@ -37,13 +41,9 @@ public class Demo {
             classifierName = args[0];
         } else {
             URL url = new URL("https://raw.github.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_alt.xml");
-            File file = Loader.extractResource(url, null, "classifier", ".xml");
-            file.deleteOnExit();
+            File file = Loader.cacheResource(url);
             classifierName = file.getAbsolutePath();
         }
-
-        // Preload the opencv_objdetect module to work around a known bug.
-        Loader.load(opencv_objdetect.class);
 
         // We can "cast" Pointer objects by instantiating a new object of the desired class.
         CascadeClassifier classifier = new CascadeClassifier(classifierName);
@@ -53,8 +53,8 @@ public class Demo {
         }
 
         // The available FrameGrabber classes include OpenCVFrameGrabber (opencv_videoio),
-        // DC1394FrameGrabber, FlyCaptureFrameGrabber, OpenKinectFrameGrabber, OpenKinect2FrameGrabber,
-        // RealSenseFrameGrabber, PS3EyeFrameGrabber, VideoInputFrameGrabber, and FFmpegFrameGrabber.
+        // DC1394FrameGrabber, FlyCapture2FrameGrabber, OpenKinectFrameGrabber, OpenKinect2FrameGrabber,
+        // RealSenseFrameGrabber, RealSense2FrameGrabber, PS3EyeFrameGrabber, VideoInputFrameGrabber, and FFmpegFrameGrabber.
         FrameGrabber grabber = FrameGrabber.createDefault(0);
         grabber.start();
 
@@ -113,8 +113,7 @@ public class Demo {
             // Let's try to detect some faces! but we need a grayscale image...
             cvtColor(grabbedImage, grayImage, CV_BGR2GRAY);
             RectVector faces = new RectVector();
-            classifier.detectMultiScale(grayImage, faces,
-                    1.1, 3, CV_HAAR_FIND_BIGGEST_OBJECT | CV_HAAR_DO_ROUGH_SEARCH, null, null);
+            classifier.detectMultiScale(grayImage, faces);
             long total = faces.size();
             for (long i = 0; i < total; i++) {
                 Rect r = faces.get(i);
